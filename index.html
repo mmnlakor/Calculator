@@ -263,4 +263,40 @@ function numInput(obj, key, step, onChange) {
 function renderScale() {
   const gb = document.querySelector("#gradeTable tbody"); gb.replaceChildren();
   state.grades.forEach((row) => gb.append(el("tr", {},
-    el("td", {}, el("input", { type: "text", value:
+    el("td", {}, el("input", { type: "text", value: row.g, "aria-label": "Grade letter", oninput: (e) => { row.g = e.target.value; validateScale(); refresh(); } })),
+    el("td", {}, numInput(row, "min", "any", () => { validateScale(); refresh(); })),
+    el("td", {}, numInput(row, "pt", "any", () => { validateScale(); refresh(); }))
+  )));
+  const bb = document.querySelector("#bandTable tbody"); bb.replaceChildren();
+  state.bands.forEach((row) => bb.append(el("tr", {},
+    el("td", {}, el("input", { type: "text", value: row.label, "aria-label": "Class name", oninput: (e) => { row.label = e.target.value; refresh(); } })),
+    el("td", {}, numInput(row, "min", "0.01", () => refresh()))
+  )));
+}
+function validateScale() {
+  const mins = state.grades.map((g) => g.min);
+  const msg = !mins.includes(0) ? "Include a grade with minimum score 0 (usually F) so every score gets a grade." : "";
+  document.getElementById("scaleErr").textContent = msg;
+}
+
+/* ---------- Wire up buttons ---------- */
+document.getElementById("addSem").onclick = () => {
+  state.sems.push(newSem(state.sems.length + 1)); renderSems(); refresh();
+  // Bring the new semester into view; on a phone it is otherwise below the screen.
+  const cards = document.querySelectorAll("#sems > section");
+  const last = cards[cards.length - 1];
+  if (last && last.scrollIntoView) last.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+document.getElementById("reset").onclick = () => {
+  if (!confirm("Clear all semesters and courses? Your grading scale is kept.")) return;
+  state.sems = [newSem(1)]; renderSems(); refresh();
+};
+document.getElementById("resetScale").onclick = () => {
+  state.grades = clone(DEFAULT_GRADES); state.bands = clone(DEFAULT_BANDS);
+  renderScale(); validateScale(); refresh();
+};
+
+renderSems(); renderScale(); validateScale(); refresh();
+</script>
+</body>
+</html>
